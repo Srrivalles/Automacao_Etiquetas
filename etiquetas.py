@@ -3,23 +3,24 @@ from tkinter import messagebox
 import os
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Font, PatternFill, Border, Side
+from openpyxl.drawing.image import Image
 
 # Caminho do arquivo Excel
 caminho_arquivo = os.path.join(os.getcwd(), "etiquetas_formatadas.xlsx")
 
 # Variável para nome do projeto
-nome_projeto = "MOU - VIVO"  # Nome inicial do projeto
+nome_projeto = "PROJETO SEM NOME"  # Nome inicial do projeto
 
-# Lista de projetos (pode ser carregada de um arquivo ou banco de dados)
-projetos = ["DECOMMISSIONING", "REMANEJAMENTO", "LOGISTICA REVERSA", "COLD SWAP", "REUSO"]
+# Lista de projetos
+projetos = ["VENDER", "COMPRAR", "TRANSBORDO", "FILIAL", "FRANQUIA"]
 
-# Função para salvar a lista de projetos (opcional, se quiser persistência)
+# Função para salvar a lista de projetos 
 def salvar_projetos():
     with open("projetos.txt", "w") as arquivo:
         for projeto in projetos:
             arquivo.write(projeto + "\n")
 
-# Função para carregar a lista de projetos (opcional, se quiser persistência)
+# Função para carregar a lista de projetos
 def carregar_projetos():
     if os.path.exists("projetos.txt"):
         with open("projetos.txt", "r") as arquivo:
@@ -37,7 +38,6 @@ def criar_etiquetas():
         quantidade_texto = entrada_quantidade.get()
         nota_fiscal = entrada_nota_fiscal.get()
         nome_responsavel = entrada_responsavel.get()
-        demanda_regiao = entrada_demanda_regiao.get()
         obs = entrada_obs.get()
 
         # Validação dos campos obrigatórios
@@ -80,7 +80,7 @@ def criar_etiquetas():
 
         # Loop para gerar etiquetas em linhas
         for i in range(1, quantidade_total + 1):
-            linha_inicial = linha_atual + (i - 1) * 14
+            linha_inicial = linha_atual + (i - 1) * 14  # Ajuste para incluir uma linha de espaço
 
             # Mesclar células para o nome do projeto com bordas e fundo
             sheet.merge_cells(start_row=linha_inicial, start_column=1, end_row=linha_inicial + 1, end_column=3)
@@ -102,16 +102,22 @@ def criar_etiquetas():
                     cell_empty.fill = fill_color
                     cell_empty.border = border_style
 
+            # Adicionar a imagem dentro das células mescladas
+            img = Image('TIM-LOGO.png')  # Substitua pelo caminho da sua imagem
+            img.width = 70 
+            img.height = 40 
+            sheet.add_image(img, f'A{linha_inicial + 1}')  # Ajuste a célula conforme necessário
+
             # Adicionar informações do usuário
             labels = [
                 ("Localidade:", cidade_estado),
-                ("Identificação:", "Serie:"),  # Fixo
+                ("Área Responsável:", "EMPRESA:"),  # FIXO
                 ("Nome do Equipamento:", fruta_cod1_cod2),
                 ("Quantidade de Equipamentos:", f"{i:02d}/{quantidade_total:02d}"),
                 ("Nota fiscal:", nota_fiscal),
                 ("Responsável:", nome_responsavel),
-                ("Demanda:", "Local de envio:"),  # Fixo
-                ("Obs:", obs)  # Corrigido: use `obs` em vez de `obs_fruta`
+                ("Demanda:", "Rollout"),  # Fixo
+                ("Obs:", obs)
             ]
 
             # Loop para preencher as labels e as informações do usuário
@@ -125,14 +131,6 @@ def criar_etiquetas():
                 # Definir as entradas do usuário
                 user_input_cell = sheet.cell(row=j, column=2, value=user_input)
                 user_input_cell.border = border_style
-
-                # Adicionar "Tel.:" ou "Radar  Nº da ID:" ao lado
-                if label_text == "Responsável Regional:":
-                    extra_cell = sheet.cell(row=j, column=3, value="Tel.:")
-                    extra_cell.border = border_style
-                elif label_text == "Origem da Demanda:":
-                    extra_cell = sheet.cell(row=j, column=3, value="Radar          Nº da ID:")
-                    extra_cell.border = border_style
 
         # Ajustar largura das colunas para melhor visualização
         sheet.column_dimensions['A'].width = 47.22
@@ -151,12 +149,12 @@ def criar_etiquetas():
     except Exception as e:
         messagebox.showerror("Erro", f"Ocorreu um erro: {e}")
 
-# Função para abrir a tela de gerenciamento de projetos
+    # Função para abrir a tela de gerenciamento de projetos
 def gerenciar_projetos():
     # Criar uma nova janela para gerenciamento de projetos
     janela_gerenciamento = Toplevel(root)
     janela_gerenciamento.title("Gerenciar Projetos")
-    janela_gerenciamento.geometry("720x520")
+    janela_gerenciamento.geometry("650x490")
     janela_gerenciamento.configure(bg="#f0f0f0")
 
     # Função para adicionar projeto
@@ -201,12 +199,12 @@ def gerenciar_projetos():
     # Botão para remover projeto
     Button(janela_gerenciamento, text="Remover Projeto Selecionado", bg="#FF0000", fg="white", command=remover_projeto, font=("Segoe UI", 14)).pack(pady=10)
 
-# Função para selecionar um projeto existente
+    # Função para selecionar um projeto existente
 def selecionar_projeto():
     # Criar uma nova janela para seleção de projetos
     janela_selecao = Toplevel(root)
     janela_selecao.title("Selecionar Projeto")
-    janela_selecao.geometry("650x450")
+    janela_selecao.geometry("450x400")
     janela_selecao.configure(bg="#f0f0f0")
 
     # Função para confirmar a seleção
@@ -232,11 +230,10 @@ def selecionar_projeto():
 
 # Função para abrir a primeira tela de escolha
 def alterar_nome_projeto():
-
-    # Janela de opção de projeto
+    # Criar uma nova janela para escolha
     janela_escolha = Toplevel(root)
-    janela_escolha.title("Escolha uma Opção")
-    janela_escolha.geometry("400x200")
+    janela_escolha.title("Selecione uma opção")
+    janela_escolha.geometry("400x250")
     janela_escolha.configure(bg="#f0f0f0")
 
     # Mensagem de instrução
@@ -255,7 +252,6 @@ def limpar_campos():
     entrada_quantidade.delete(0, END)
     entrada_nota_fiscal.delete(0, END)
     entrada_responsavel.delete(0, END)
-    entrada_demanda_regiao.delete(0, END)
     entrada_obs.delete(0, END)
     messagebox.showinfo("Informação", "Campos limpos para adicionar um novo produto.")
 
@@ -293,9 +289,6 @@ Label(frame_campos, text="Nome do Responsável:", bg="#f0f0f0", fg="black", font
 entrada_responsavel = Entry(frame_campos, bg="white", fg="black", width=50, font=label_font)
 entrada_responsavel.grid(row=4, column=1, padx=10, pady=10, sticky=W)
 
-Label(frame_campos, text="Demanda:", bg="#f0f0f0", fg="black", font=label_font).grid(row=5, column=0, padx=10, pady=10, sticky=W)
-entrada_demanda_regiao = Entry(frame_campos, bg="white", fg="black", width=50, font=label_font)
-entrada_demanda_regiao.grid(row=5, column=1, padx=10, pady=10, sticky=W)
 
 Label(frame_campos, text="Observações:", bg="#f0f0f0", fg="black", font=label_font).grid(row=6, column=0, padx=10, pady=10, sticky=W)
 entrada_obs = Entry(frame_campos, bg="white", fg="black", width=50, font=label_font)
